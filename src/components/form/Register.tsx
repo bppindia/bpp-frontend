@@ -30,7 +30,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { IconBrandApple } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Control, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -41,7 +41,7 @@ import BottomGradient from '../features/BottomGradient';
 
 // Form schemas for each step
 const initialFormSchema = z.object({
-    email: z.string().email({ message: 'Invalid email address' }),
+    email: z.string().min(1, { message: 'Email or phone is required' }),
     terms: z.boolean().refine((val) => val === true, {
         message: 'You must accept the terms and conditions',
     }),
@@ -52,25 +52,25 @@ const otpFormSchema = z.object({
 });
 
 const userDetailsSchema = z.object({
-    firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
-    middleName: z.string().optional(),
-    lastName: z.string().min(2, { message: 'Last name must be at least 2 characters' }),
-    dob: z.string().min(1, { message: 'Date of birth is required' }),
-    age: z.string().min(1, { message: 'Age is required' }),
-    voterId: z.string().min(10, { message: 'Invalid voter ID' }),
-    aadharNumber: z.string().length(12, { message: 'Aadhar number must be 12 digits' }),
-    gender: z.string().min(1, { message: 'Gender is required' }),
-    phone: z.string().min(10, { message: 'Invalid phone number' }),
+    // firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
+    // middleName: z.string().optional(),
+    // lastName: z.string().min(2, { message: 'Last name must be at least 2 characters' }),
+    // dob: z.string().min(1, { message: 'Date of birth is required' }),
+    // age: z.string().min(1, { message: 'Age is required' }),
+    // voterId: z.string().min(10, { message: 'Invalid voter ID' }),
+    // aadharNumber: z.string().length(12, { message: 'Aadhar number must be 12 digits' }),
+    // gender: z.string().min(1, { message: 'Gender is required' }),
+    // phone: z.string().min(10, { message: 'Invalid phone number' }),
 });
 
 const addressSchema = z.object({
-    addressLine1: z.string().min(5, { message: 'Address line 1 is required' }),
-    addressLine2: z.string().optional(),
-    cityVillage: z.string().min(2, { message: 'City/Village is required' }),
-    taluka: z.string().min(2, { message: 'Taluka is required' }),
-    district: z.string().min(2, { message: 'District is required' }),
-    state: z.string().min(2, { message: 'State is required' }),
-    pincode: z.string().length(6, { message: 'Invalid pincode' }),
+    // addressLine1: z.string().min(5, { message: 'Address line 1 is required' }),
+    // addressLine2: z.string().optional(),
+    // cityVillage: z.string().min(2, { message: 'City/Village is required' }),
+    // taluka: z.string().min(2, { message: 'Taluka is required' }),
+    // district: z.string().min(2, { message: 'District is required' }),
+    // state: z.string().min(2, { message: 'State is required' }),
+    // pincode: z.string().length(6, { message: 'Invalid pincode' }),
 });
 
 const credentialsSchema = z.object({
@@ -98,6 +98,10 @@ const Register = () => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({});
     const [showCaptcha, setShowCaptcha] = useState(false);
+    const [contactType, setContactType] = useState('');
+    const [maskedContact, setMaskedContact] = useState('');
+    const [timer, setTimer] = useState(120); // 2 minutes in seconds
+    const [showResend, setShowResend] = useState(false);
 
     // Initial form (Email + Terms)
     const initialForm = useForm<z.infer<typeof initialFormSchema>>({
@@ -156,16 +160,14 @@ const Register = () => {
     });
 
 
-    const handleInitialSubmit = async (values: z.infer<typeof initialFormSchema>) => {
+    const handleInitialSubmit = async (values: React.SetStateAction<{}>) => {
+        setFormData({ ...formData, ...values });
         setStep(2);
         setShowCaptcha(true);
-        setFormData({ ...formData, ...values });
     };
 
     const handleCaptchaSuccess = () => {
-        // setStep(2);
-        // Simulate sending OTP
-        toast.success('OTP sent to your email');
+        toast.success(`OTP sent to your ${contactType === 'phone' ? 'phone number' : 'email'}`);
     };
 
 
@@ -199,6 +201,50 @@ const Register = () => {
         console.log("error while google auth")
     }
 
+
+    useEffect(() => {
+        let interval: string | number | NodeJS.Timeout | undefined;
+        if (step === 2 && timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        } else if (timer === 0) {
+            setShowResend(true);
+        }
+        return () => clearInterval(interval);
+    }, [timer, step]);
+
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    const handleResendOTP = () => {
+        setTimer(120);
+        setShowResend(false);
+        toast.success('OTP resent successfully');
+    };
+
+    // Function to detect if input is email or phone
+    const detectInputType = (value: string) => {
+        const phoneRegex = /^[0-9]{10}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (phoneRegex.test(value)) {
+            setContactType('phone');
+            setMaskedContact(value.replace(/(\d{2})(\d{4})(\d{4})/, 'XX-XXXX-$3'));
+        } else if (emailRegex.test(value)) {
+            setContactType('email');
+            const [username, domain] = value.split('@');
+            setMaskedContact(`${username.charAt(0)}${'*'.repeat(username.length - 2)}${username.charAt(username.length - 1)}@${domain}`);
+        } else {
+            setContactType('');
+            setMaskedContact('');
+        }
+    };
+
+
     const renderStepContent = () => {
         switch (step) {
             case 1:
@@ -213,9 +259,21 @@ const Register = () => {
                                         <FormItem>
                                             <FormLabel>Email/Phone number</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="email@example.com" {...field} />
+                                                <Input
+                                                    placeholder={contactType === 'phone' ? "Enter 10-digit mobile number" : "Email/Phone Number"}
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        field.onChange(e);
+                                                        detectInputType(e.target.value);
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
+                                            {contactType && (
+                                                <div className="text-sm text-green-600">
+                                                    Detected: {contactType === 'phone' ? 'Phone Number' : 'Email Address'}
+                                                </div>
+                                            )}
                                         </FormItem>
                                     )}
                                 />
@@ -260,29 +318,46 @@ const Register = () => {
             case 2:
                 return (
                     <Form {...otpForm}>
-                        <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-8 w-full"> {/* Ensure the form is full width */}
+                        <form onSubmit={otpForm.handleSubmit(handleOtpSubmit)} className="space-y-8">
                             <FormField
                                 control={otpForm.control}
                                 name="otp"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Enter Your OTP</FormLabel>
+                                        <FormLabel>
+                                            Enter OTP sent to {contactType === 'phone' ? 'phone number' : 'email'}{' '}
+                                            {maskedContact}
+                                        </FormLabel>
                                         <FormControl>
-                                            <InputOTP {...field} maxLength={6} onChange={(value) => field.onChange(value)} className="w-full">
-                                                <div className="flex justify-between w-full space-x-2">
-                                                    <InputOTPGroup className="flex space-x-2 w-full">
-                                                        <InputOTPSlot index={0} className="flex-1" />
-                                                        <InputOTPSlot index={1} className="flex-1" />
-                                                        <InputOTPSlot index={2} className="flex-1" />
-                                                    </InputOTPGroup>
-                                                    {/* <InputOTPSeparator /> */}
-                                                    <InputOTPGroup className="flex space-x-2 w-full">
-                                                        <InputOTPSlot index={3} className="flex-1" />
-                                                        <InputOTPSlot index={4} className="flex-1" />
-                                                        <InputOTPSlot index={5} className="flex-1" />
-                                                    </InputOTPGroup>
+                                            <div className="space-y-4">
+                                                <InputOTP maxLength={6} {...field}>
+                                                    <div className="flex justify-between w-full space-x-2">
+                                                        <InputOTPGroup className="flex space-x-2 w-full">
+                                                            <InputOTPSlot index={0} className="flex-1" />
+                                                            <InputOTPSlot index={1} className="flex-1" />
+                                                            <InputOTPSlot index={2} className="flex-1" />
+                                                        </InputOTPGroup>
+                                                        <InputOTPGroup className="flex space-x-2 w-full">
+                                                            <InputOTPSlot index={3} className="flex-1" />
+                                                            <InputOTPSlot index={4} className="flex-1" />
+                                                            <InputOTPSlot index={5} className="flex-1" />
+                                                        </InputOTPGroup>
+                                                    </div>
+                                                </InputOTP>
+                                                <div className="text-sm text-gray-500 text-center">
+                                                    Time remaining: {formatTime(timer)}
                                                 </div>
-                                            </InputOTP>
+                                                {showResend && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="link"
+                                                        className="w-full text-blue-600"
+                                                        onClick={handleResendOTP}
+                                                    >
+                                                        Resend OTP
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -293,7 +368,6 @@ const Register = () => {
                             </Button>
                         </form>
                     </Form>
-
                 );
 
             case 3:
@@ -398,19 +472,35 @@ const Register = () => {
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={userDetailsForm.control}
-                                        name="phone"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Phone Number</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Enter phone number" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                    {contactType === 'phone' ? (
+                                        <FormField
+                                            control={userDetailsForm.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Email Address</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter email address" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    ) : (
+                                        <FormField
+                                            control={userDetailsForm.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Phone Number</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter phone number" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
                                 </div>
 
                                 {/* Row 3: Voter ID and Aadhar */}
