@@ -1,41 +1,45 @@
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-export const Newsletter = () => {
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    console.log("Subscribed!");
-  };
-
+export default function Newsletter() {
   return (
-    <section id="newsletter">
-      <hr className="w-11/12 mx-auto" />
-
-      <div className="container py-24 sm:py-32">
-        <h3 className="text-center text-4xl md:text-5xl font-bold">
+    <>
+      {/* Hero */}
+      <div className="container py-15 lg:py-15">
+        {/* Grid */}
+        <div className="grid lg:grid-cols-7 lg:gap-x-8 xl:gap-x-12 lg:items-center">
+          <div className="lg:col-span-3">
+          <h3 className="text-4xl md:text-5xl font-bold">
           Subscribe{" "}
           <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-            Our Newsletter
+            For Updates
           </span>
         </h3>
-        <p className="text-xl text-muted-foreground text-center mt-4 mb-8">
-          Lorem ipsum dolor sit amet consectetur.
-        </p>
-
-        <form
-          className="flex flex-col w-full md:flex-row md:w-6/12 lg:w-4/12 mx-auto gap-4 md:gap-2"
-          onSubmit={handleSubmit}
-        >
-          <Input
-            placeholder="test@gmail.com"
-            className="bg-muted/50 dark:bg-muted/80 "
-            aria-label="email"
-          />
-          <Button>Subscribe</Button>
-        </form>
+            <p className="mt-3 text-xl text-muted-foreground">
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Laudantium ipsam omnis voluptate tempore possimus iusto minima a facilis. Tempora, doloremque quidem?
+            </p>
+            <div className="mt-5 w-full lg:mt-8 flex flex-col sm:items-center gap-2 sm:flex-row sm:gap-3">
+              <div className="w-full max-w-lg  lg:w-auto">
+                <Label className="sr-only">Search</Label>
+                <Input placeholder="Enter work email" type="email" />
+              </div>
+              <Button className="w-min">Subscribe</Button>
+            </div>
+          </div>
+          {/* End Col */}
+          <div className="lg:col-span-4 mt-10 lg:mt-0">
+            <img
+              className="w-full rounded-xl"
+              src="https://placehold.co/700x540"
+              alt="Image Description"
+            />
+          </div>
+          {/* End Col */}
+        </div>
+        {/* End Grid */}
       </div>
-
-      <hr className="w-11/12 mx-auto" />
-    </section>
+      {/* End Hero */}
+    </>
   );
-};
+}
