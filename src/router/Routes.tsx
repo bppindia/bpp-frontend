@@ -1,5 +1,7 @@
 import { About } from '@/components/About';
 import Register from '@/components/form/Register';
+import CommitmentToProgress from '@/pages/about/CommitmentToProgress';
+import CommunityContribution from '@/pages/about/CommunityContribution';
 import GetToKnow from '@/pages/about/GetToKnow';
 import Goals from '@/pages/about/Goals';
 import ForgetPin from '@/pages/auth/ForgetPin';
@@ -7,6 +9,8 @@ import ForgotPassword from "@/pages/auth/ForgotPassword";
 import Login from '@/pages/auth/Login';
 import ResetPassword from '@/pages/auth/ResetPassword';
 import ResetPin from '@/pages/auth/ResetPin';
+import EthicsVendorsSuppliers from '@/pages/BusinessCommunity/EthicsVendorsSuppliers';
+import VendorSupplier from '@/pages/BusinessCommunity/VendorSupplier';
 import Contact from '@/pages/Contact/Contact';
 import Home from '@/pages/Home/Home';
 import Join from '@/pages/Membership/JoinNow';
@@ -39,6 +43,10 @@ const AppRoutes = () => {
                 <Route path="/customer-support" element={<CustomerService />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route path="/business-community/vendor-suppliers" element={<VendorSupplier />} />
+                <Route path="/business-community/ethics" element={<EthicsVendorsSuppliers />} />
+                <Route path="/about/community-contribution" element={<CommunityContribution />} />
+                <Route path="/about/commitment-progress" element={<CommitmentToProgress />} />
                 <Route path="*" element={<PageNotFound />} />
             </Routes>
         </BrowserRouter>

@@ -270,8 +270,8 @@ export const Navbar = () => {
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden md:flex gap-2">
-            <Button onClick={() => navigate("/login")}>Log In</Button>
-            <Button onClick={() => navigate("/signup")}>Sign Up</Button>
+            {/* <Button onClick={() => navigate("/login")}>Log In</Button> */}
+            <Button className="bg-blue-600 hover:bg-blue-900" onClick={() => navigate("/signup")}>Join BPP</Button>
             <LanguageToggle />
             <ModeToggle />
           </div>
